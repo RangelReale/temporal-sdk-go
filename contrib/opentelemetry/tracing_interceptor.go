@@ -63,7 +63,7 @@ type TracerOptions struct {
 
 	// SpanStarter is a callback to create spans. If not set, this creates normal
 	// OpenTelemetry spans calling Tracer.Start.
-	SpanStarter func(ctx context.Context, t trace.Tracer, spanName string, opts ...trace.SpanStartOption) trace.Span
+	SpanStarter func(ctx context.Context, t trace.Tracer, spanName string, opts ...trace.SpanStartOption) (context.Context, trace.Span)
 }
 
 type spanContextKey struct{}
@@ -96,9 +96,8 @@ func NewTracer(options TracerOptions) (interceptor.Tracer, error) {
 			t trace.Tracer,
 			spanName string,
 			opts ...trace.SpanStartOption,
-		) trace.Span {
-			_, span := t.Start(ctx, spanName, opts...)
-			return span
+		) (context.Context, trace.Span) {
+			return t.Start(ctx, spanName, opts...)
 		}
 	}
 	return &tracer{options: &options}, nil
@@ -197,7 +196,7 @@ func (t *tracer) StartSpan(opts *interceptor.TracerStartSpanOptions) (intercepto
 	}
 
 	// Create span
-	span := t.options.SpanStarter(ctx, t.options.Tracer, opts.Operation+":"+opts.Name, trace.WithTimestamp(opts.Time))
+	ctx, span := t.options.SpanStarter(ctx, t.options.Tracer, opts.Operation+":"+opts.Name, trace.WithTimestamp(opts.Time))
 
 	// Set tags
 	if len(opts.Tags) > 0 {
