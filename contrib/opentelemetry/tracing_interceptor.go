@@ -172,7 +172,7 @@ func (t *tracer) ContextWithSpan(ctx context.Context, span interceptor.TracerSpa
 	return trace.ContextWithSpan(ctx, span.(*tracerSpan).Span)
 }
 
-func (t *tracer) StartSpan(opts *interceptor.TracerStartSpanOptions) (interceptor.TracerSpan, error) {
+func (t *tracer) StartSpan(commonCtx interceptor.CommonContext, opts *interceptor.TracerStartSpanOptions) (interceptor.CommonContext, interceptor.TracerSpan, error) {
 	// Create context with parent
 	var parent trace.SpanContext
 	var bag baggage.Baggage
@@ -185,9 +185,13 @@ func (t *tracer) StartSpan(opts *interceptor.TracerStartSpanOptions) (intercepto
 		parent = optParent.SpanContext
 		bag = optParent.Baggage
 	default:
-		return nil, fmt.Errorf("unrecognized parent type %T", optParent)
+		return commonCtx, nil, fmt.Errorf("unrecognized parent type %T", optParent)
 	}
 	ctx := context.Background()
+	if coreCtx, ok := commonCtx.(context.Context); ok {
+		ctx = coreCtx
+	}
+
 	if parent.IsValid() {
 		ctx = trace.ContextWithSpanContext(ctx, parent)
 		if !t.options.DisableBaggage {
@@ -212,7 +216,7 @@ func (t *tracer) StartSpan(opts *interceptor.TracerStartSpanOptions) (intercepto
 		tSpan.Baggage = bag
 	}
 
-	return tSpan, nil
+	return ctx, tSpan, nil
 }
 
 func (t *tracer) GetLogger(logger log.Logger, ref interceptor.TracerSpanRef) log.Logger {

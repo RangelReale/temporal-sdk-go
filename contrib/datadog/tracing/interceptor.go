@@ -142,7 +142,7 @@ func genSpanID(idempotencyKey string) uint64 {
 	return h.Sum64()
 }
 
-func (t *tracerImpl) StartSpan(options *interceptor.TracerStartSpanOptions) (interceptor.TracerSpan, error) {
+func (t *tracerImpl) StartSpan(ctx interceptor.CommonContext, options *interceptor.TracerStartSpanOptions) (context.Context, interceptor.TracerSpan, error) {
 	startOpts := []tracer.StartSpanOption{
 		tracer.ResourceName(options.Name),
 		tracer.StartTime(options.Time),
@@ -173,7 +173,7 @@ func (t *tracerImpl) StartSpan(options *interceptor.TracerStartSpanOptions) (int
 		// starting lowercase on "spanContext", that's an internal struct)
 		parentTrace, err := tracer.Extract(newSpanContextReader(parent))
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		startOpts = append(startOpts, tracer.ChildOf(parentTrace))
 	}
@@ -188,7 +188,7 @@ func (t *tracerImpl) StartSpan(options *interceptor.TracerStartSpanOptions) (int
 
 	// Start and return span
 	s := tracer.StartSpan(t.SpanName(options), startOpts...)
-	return &tracerSpan{OnFinish: t.opts.OnFinish, Span: s}, nil
+	return nil, &tracerSpan{OnFinish: t.opts.OnFinish, Span: s}, nil
 }
 
 func (t *tracerImpl) GetLogger(logger log.Logger, ref interceptor.TracerSpanRef) log.Logger {

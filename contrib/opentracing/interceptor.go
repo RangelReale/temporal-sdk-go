@@ -121,7 +121,7 @@ func (t *tracer) ContextWithSpan(ctx context.Context, span interceptor.TracerSpa
 	return opentracing.ContextWithSpan(ctx, span.(*tracerSpan).Span)
 }
 
-func (t *tracer) StartSpan(opts *interceptor.TracerStartSpanOptions) (interceptor.TracerSpan, error) {
+func (t *tracer) StartSpan(ctx interceptor.CommonContext, opts *interceptor.TracerStartSpanOptions) (context.Context, interceptor.TracerSpan, error) {
 	// Build start options
 	startOpts := []opentracing.StartSpanOption{
 		opentracing.StartTime(opts.Time),
@@ -136,7 +136,7 @@ func (t *tracer) StartSpan(opts *interceptor.TracerStartSpanOptions) (intercepto
 	case *tracerSpanRef:
 		parent = optParent.SpanContext
 	default:
-		return nil, fmt.Errorf("unrecognized parent type %T", optParent)
+		return nil, nil, fmt.Errorf("unrecognized parent type %T", optParent)
 	}
 	if parent != nil {
 		if opts.DependedOn {
@@ -156,7 +156,7 @@ func (t *tracer) StartSpan(opts *interceptor.TracerStartSpanOptions) (intercepto
 	}
 
 	// Start
-	return &tracerSpan{Span: t.options.SpanStarter(t.options.Tracer, opts.Operation+":"+opts.Name, startOpts...)}, nil
+	return nil, &tracerSpan{Span: t.options.SpanStarter(t.options.Tracer, opts.Operation+":"+opts.Name, startOpts...)}, nil
 }
 
 type tracerSpanRef struct{ opentracing.SpanContext }

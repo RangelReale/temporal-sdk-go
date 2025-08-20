@@ -44,7 +44,7 @@ func (t *testTracer) ContextWithSpan(ctx context.Context, span interceptor.Trace
 	return ctx
 }
 
-func (t *testTracer) StartSpan(options *interceptor.TracerStartSpanOptions) (interceptor.TracerSpan, error) {
+func (t *testTracer) StartSpan(ctx interceptor.CommonContext, options *interceptor.TracerStartSpanOptions) (context.Context, interceptor.TracerSpan, error) {
 	// Require start time to be set
 	if options.Time.IsZero() {
 		switch options.Operation {
@@ -54,7 +54,7 @@ func (t *testTracer) StartSpan(options *interceptor.TracerStartSpanOptions) (int
 			t.T.Errorf("Got zero value for span start time: %v", options)
 		}
 	}
-	return testSpan{}, nil
+	return nil, testSpan{}, nil
 }
 
 func TestSpanTimestamps(t *testing.T) {

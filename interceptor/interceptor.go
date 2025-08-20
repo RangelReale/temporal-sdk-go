@@ -9,6 +9,10 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
+type CommonContext interface {
+	Value(interface{}) interface{}
+}
+
 // Interceptor is a common interface for all interceptors. It combines
 // ClientInterceptor and WorkerInterceptor. If an implementation of this
 // interceptor is provided via client options, some client calls and all worker
