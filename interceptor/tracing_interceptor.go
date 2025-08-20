@@ -860,9 +860,12 @@ func (t *tracingInterceptor) startSpanFromContext(
 ) (TracerSpan, context.Context, error) {
 	// Try to get parent from context
 	options.Parent = t.tracer.SpanFromContext(ctx)
-	ctx, span, err := t.startSpan(ctx, options, headerReader, headerWriter)
+	spanCtx, span, err := t.startSpan(ctx, options, headerReader, headerWriter)
 	if err != nil {
 		return nil, nil, err
+	}
+	if spanCtx != nil {
+		ctx = spanCtx
 	}
 	return span, t.tracer.ContextWithSpan(context.WithValue(ctx, t.options.SpanContextKey, span), span), nil
 }
